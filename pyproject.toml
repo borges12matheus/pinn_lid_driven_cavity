@@ -1,0 +1,17 @@
+[project]
+name = "lid-driven-cavity"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastparquet>=2025.12.0",
+    "joblib>=1.5.3",
+    "matplotlib>=3.10.8",
+    "numpy>=2.2.6",
+    "pandas>=2.3.3",
+    "pyarrow>=22.0.0",
+    "pyvista>=0.46.5",
+    "scikit-learn>=1.7.2",
+    "torch>=2.9.1",
+]
