@@ -5,9 +5,10 @@ from pathlib import Path
 # -----------------------
 # Config
 # -----------------------
-#CSV_PATH = Path("data/cavity_20/cavity_20_full.csv")  # path para CSV consolidado
-CSV_PATH = Path("data/cavity_80/cavity_80_full.csv")  # path para CSV referência 80x80
-OUT_DIR = Path("data/prepared")
+CSV_PATH_20 = Path("/data/cavity_20/cavity_20_full.csv")  # path para CSV grosseiro
+CSV_PATH_40 = Path("/data/cavity_40/cavity_40_full.csv")  # path para CSV refinado
+CSV_PATH_80 = Path("data/cavity_80/cavity_80_full.csv")  # path para CSV referência 80x80
+OUT_DIR = Path("/data/prepared")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 L = 0.1       # tamanho do domínio (0.1m no cavity tutorial)
@@ -35,7 +36,7 @@ def classify_regions(df: pd.DataFrame) -> pd.DataFrame:
     y_bot = y.min()
     x_left = x.min()
     x_right = x.max()
-    
+
     eps_edge = 1e-12
 
     is_top = np.isclose(y, y_top, atol=eps_edge)
@@ -58,9 +59,9 @@ def classify_regions(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 # -----------------------
-# Main
+# Processamento
 # -----------------------
-def main():
+def process_csv(CSV_PATH: Path) -> None:
     df = pd.read_csv(CSV_PATH)
 
     # Colunas esperadas (formato “full” consolidado)
@@ -80,12 +81,12 @@ def main():
     df_bc = df_full[df_full["region"].isin(["walls", "moving_lid"])].copy()
     df_int = df_full[df_full["region"] == "interior"].copy()
 
-    # (Opcional) reduzir interior para collocation points (se o dataset for grande)
-    # df_int = df_int.sample(n=min(20000, len(df_int)), random_state=42)
-
-    out_full = OUT_DIR / "cavity80_full_norm.parquet"
-    out_bc   = OUT_DIR / "cavity80_bc.parquet"
-    out_int  = OUT_DIR / "cavity80_interior.parquet"
+    # Separando por regiões e salvando em parquet
+    nome_dir = f"{OUT_DIR}/{'_'.join(CSV_PATH.stem.split('_')[:2])}"
+    Path(nome_dir).mkdir(parents=True, exist_ok=True)
+    out_full = f"{nome_dir}/{'_'.join(CSV_PATH.stem.split('_')[:2])}_full_norm.parquet"
+    out_bc   = f"{nome_dir}/{'_'.join(CSV_PATH.stem.split('_')[:2])}_bc.parquet"
+    out_int  = f"{nome_dir}/{'_'.join(CSV_PATH.stem.split('_')[:2])}_interior.parquet"
 
     df_full.to_parquet(out_full, index=False)
     df_bc.to_parquet(out_bc, index=False)
@@ -101,6 +102,12 @@ def main():
     lid = df_bc[df_bc["region"] == "moving_lid"]
     if len(lid) > 0:
         print("\nChecagem tampa (média): uN=", lid["uN"].mean(), " vN=", lid["vN"].mean())
+        print(f"Processamento de {CSV_PATH.stem} concluído.\n")
 
+# -----------------------
+# Main
+# -----------------------
 if __name__ == "__main__":
-    main()
+    process_csv(CSV_PATH_20)
+    process_csv(CSV_PATH_40)
+    process_csv(CSV_PATH_80)
