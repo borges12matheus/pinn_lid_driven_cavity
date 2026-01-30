@@ -1,0 +1,10 @@
+=== Métricas globais (ref40 = U_base + Delta) ===
+RMSE MLP:     2.340497e-02
+RMSE Híbrido: 3.262768e-02
+MAE  MLP:     9.643311e-03
+MAE  Híbrido: 1.962770e-02
+
+=== Incompressibilidade (div) ===
+L2(div) RMS (MLP):     3.851117e-01
+L2(div) RMS (Híbrido): 4.530454e-02
+Melhora div (x):       8.50x
