@@ -1,19 +1,19 @@
 # Physics-Informed ML for Lid-Driven Cavity (OpenFOAM + ML)
 
-Este repositório apresenta um pipeline de **Machine Learning aplicado à Dinâmica dos Fluidos Computacional (CFD)**, utilizando o caso canônico **lid-driven cavity** como problema de estudo. O foco é avaliar modelos **puramente data-driven** e **modelos híbridos com informação física** na tarefa de correção de soluções CFD de malha grosseira (*coarse*) para uma referência mais refinada.
+This repository presents a **Machine Learning pipeline applied to Computational Fluid Dynamics (CFD)**, using the canonical **lid-driven cavity** case as a study problem. The main goal is to evaluate **purely data-driven models** and **hybrid physics-informed models** for correcting coarse-grid CFD solutions toward a more refined reference.
 
 ---
 
-## 📌 Descrição do Problema
+## 📌 Problem Description
 
-O escoamento analisado é o **lid-driven cavity incompressível e laminar**, resolvido inicialmente via OpenFOAM. A simulação *coarse* é utilizada como entrada para modelos de ML que aprendem a corrigir o campo de velocidade, buscando maior acurácia e melhor consistência física.
+The analyzed flow is the **incompressible, laminar lid-driven cavity**, initially solved using OpenFOAM. The *coarse* simulation is used as input for ML models that learn to correct the velocity field, aiming for higher accuracy and improved physical consistency.
 
-**Configuração física principal:**
+**Main physical setup:**
 
-- Fluido incompressível e Newtoniano  
-- Regime laminar  
+- Incompressible, Newtonian fluid  
+- Laminar regime  
 - Solver: `icoFoam`  
-- Número de Reynolds:
+- Reynolds number:
   
   \[
   Re = 10
@@ -21,94 +21,110 @@ O escoamento analisado é o **lid-driven cavity incompressível e laminar**, res
 
 ---
 
-## 🧱 Domínio e Malha
+## 🧱 Domain and Mesh
 
-- Geometria: cavidade quadrada 2D  
-- Comprimento característico: \(L = 0.1\)  
-- Malha *coarse*: **20 × 20**  
-- Referência para avaliação: **40 × 40**
+- Geometry: 2D square cavity  
+- Characteristic length: \(L = 0.1\)  
+- *Coarse* mesh: **20 × 20**  
+- Reference for evaluation: **40 × 40**
 
-A bidimensionalidade é garantida via condição `empty` nas faces frontal e traseira.
+Two-dimensionality is enforced via the `empty` condition on the front and back faces.
 
 ---
 
-## ⚙️ Condições de Contorno
+## ⚙️ Boundary Conditions
 
-- **Tampa móvel (`movingWall`):**
-  - Velocidade imposta: `U = (1 0 0)`
-- **Demais paredes:** condição de não deslizamento (*no-slip*)
+- **Moving lid (`movingWall`):**
+  - Prescribed velocity: `U = (1 0 0)`
+- **Remaining walls:** no-slip condition  
 - **Front and back:** `empty`
 
 ---
 
-## 🧠 Pipeline de Machine Learning
+## 🧠 Machine Learning Pipeline
 
-O pipeline implementado no notebook Jupyter segue as seguintes etapas:
+The pipeline implemented in the Jupyter notebook follows these steps:
 
-1. Extração dos campos de velocidade das simulações CFD.
-2. Organização dos dados preservando a estrutura espacial \((x,y)\).
-3. Pré-processamento e normalização.
-4. Treinamento de modelos:
+1. Extraction of velocity fields from CFD simulations.  
+2. Data organization preserving the spatial structure \((x,y)\).  
+3. Preprocessing and normalization.  
+4. Model training:
    - **MLP (baseline data-driven)**
-   - **Modelo híbrido (MLP + correção física / PINN-delta)**
-5. Avaliação quantitativa e física dos resultados.
+   - **Hybrid model (MLP + physics correction / PINN-delta)**
+5. Quantitative and physics-based evaluation of the results.
 
 ---
 
-## 📊 Resultados Parciais
+## 📊 Partial Results
 
-### Métricas Globais
+### Global Metrics
 
-Referência utilizada:
+Reference definition:
 
 $$
-U_{\text{ref}} = U_{\text{base}} + \Delta \quad (\text{malha } 40 \times 40)
+U_{\text{ref}} = U_{\text{base}} + \Delta \quad (\text{mesh } 40 \times 40)
 $$
 
-| Métrica | MLP | Híbrido |
-|-------|-----|---------|
-| RMSE  | 2.34e-02 | 3.26e-02 |
-| MAE   | 9.64e-03 | 1.96e-02 |
+| Metric | MLP | Hybrid |
+|------|-----|--------|
+| RMSE | 2.34e-02 | 3.26e-02 |
+| MAE  | 9.64e-03 | 1.96e-02 |
 
-➡️ O **MLP apresenta menor erro global** em norma L2 e L1 quando comparado ao modelo híbrido.
-
----
-
-### Incompressibilidade (Consistência Física)
-
-Avaliação baseada na norma L2 RMS da divergência do campo de velocidade:
-
-| Modelo | L2(div) RMS |
-|-------|-------------|
-| MLP   | 3.85e-01 |
-| Híbrido | 4.53e-02 |
-
-**Ganho físico obtido:**
-
-- 🔽 Redução da divergência em aproximadamente **8.5×**
-- ✔️ O modelo híbrido melhora significativamente a **incompressibilidade global** do escoamento
+➡️ The **MLP achieves lower global error** in both L2 and L1 norms compared to the hybrid model.
 
 ---
 
-## 🔍 Principais Observações
+### Incompressibility (Physical Consistency)
 
-- Modelos puramente data-driven podem apresentar **boa acurácia global**, mas tendem a violar restrições físicas.
-- A inclusão de informação física no treinamento:
-  - reduz significativamente a divergência do campo,
-  - melhora a consistência física global,
-  - pode introduzir *trade-offs* locais em termos de erro L2/MAE.
-- Métricas físicas são essenciais para avaliar modelos ML aplicados a CFD.
+Evaluation based on the L2 RMS norm of the velocity divergence:
 
----
+| Model | L2(div) RMS |
+|------|-------------|
+| MLP  | 3.85e-01 |
+| Hybrid | 4.53e-02 |
 
-## 🚀 Próximos Passos
+**Physical gain obtained:**
 
-- Avaliação em malhas mais refinadas (ex.: 80 × 80).
-- Inclusão explícita do campo de pressão.
-- Análise local de erro vs. melhoria física.
-- Extensão do pipeline para regimes mais complexos (Re mais elevados).
+- 🔽 Divergence reduction of approximately **8.5×**  
+- ✔️ The hybrid model significantly improves **global incompressibility**
 
 ---
 
-📌 **Nota:**  
-Este repositório faz parte de um estudo acadêmico focado em *Physics-Informed Machine Learning* aplicado à aceleração e correção de simulações CFD.
+## 🔍 Key Observations
+
+- Purely data-driven models may show **good global accuracy**, but often violate physical constraints.
+- Incorporating physical information during training:
+  - significantly reduces divergence,
+  - improves global physical consistency,
+  - may introduce local *trade-offs* in L2/MAE error.
+- Physics-based metrics are essential when evaluating ML models for CFD.
+
+---
+
+## 🚀 Next Steps
+
+- Evaluation on more refined meshes (e.g., 80 × 80).  
+- Explicit inclusion of the pressure field.  
+- Local error vs. physical improvement analysis.  
+- Extension of the pipeline to more complex regimes (higher Reynolds numbers).
+
+---
+
+📌 **Note:**  
+This repository is part of an academic study focused on *Physics-Informed Machine Learning* for accelerating and correcting CFD simulations.
+
+---
+## **📜 License**
+- **Source code:** MIT License  
+- **Data, figures, and text:** Creative Commons Attribution 4.0 (CC BY 4.0)
+
+© 2016 Matheus da Silva Borges
+
+---
+## **💬 Contact**  
+**Author:** `Matheus Borges`
+
+📧 **Email:** borgesmatheus1201@email.com  
+🎓 **Lattes Curriculum (CNPq):** https://lattes.cnpq.br/6344448246000027  
+🔗 **LinkedIn:** https://www.linkedin.com/in/matheusborges12/  
+🐍 **GitHub:** https://github.com/borges12matheus
